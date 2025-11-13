@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Virenty</title>
+
+<style>
+
+/* ================================
+   GLOBAL RESET
+================================ */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Helvetica Neue", "Noto Sans JP", sans-serif;
+  background: #ffffff;
+  color: #1a1a1a;
+  overflow-x: hidden;
+}
+
+/* ================================
+   HAMBURGER BUTTON（左上）
+================================ */
+.hamburger {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  z-index: 3001;
+  width: 34px;
+  height: 26px;
+  cursor: pointer;
+}
+.hamburger span {
+  position: absolute;
+  width: 100%;
+  height: 4px;
+  background: #0f1e33;
+  border-radius: 4px;
+  transition: 0.4s;
+}
+.hamburger span:nth-child(1) { top: 0; }
+.hamburger span:nth-child(2) { top: 11px; }
+.hamburger span:nth-child(3) { top: 22px; }
+
+.hamburger.active span:nth-child(1) {
+  transform: translateY(11px) rotate(45deg);
+}
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) {
+  transform: translateY(-11px) rotate(-45deg);
+}
+
+/* ================================
+   NAV PANEL（右→左スライド、初期は完全非表示）
+================================ */
+.nav-panel {
+  position: fixed;
+  top: 0;
+  right: -70%;  /* ←初期状態：画面外 */
+  width: 70%;
+  height: 100vh;
+  background: rgba(250, 250, 250, 0.92);
+  backdrop-filter: blur(12px);
+  box-shadow: -4px 0 18px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  padding: 120px 40px;
+  gap: 30px;
+  transition: 0.45s ease;
+  z-index: 3000;
+}
+
+.nav-panel.open { right: 0; }
+
+.nav-panel a {
+  text-decoration: none;
+  font-size: 22px;
+  color: #0f1e33;
+  font-weight: 600;
+  transition: 0.3s;
+}
+.nav-panel a:hover { opacity: 0.6; }
+
+/* ================================
+   HERO + PARTICLE BACKGROUND
+================================ */
+
+#particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 88vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  background: linear-gradient(130deg, #f6eacf 0%, #e8dcbc 45%, #d9c9ac 100%);
+}
+
+/* ロゴ浮き演出 */
+.logo-text {
+  position: relative;
+  z-index: 2;
+  font-size: clamp(90px, 11vw, 165px);
+  font-weight: 800;
+  background: linear-gradient(180deg, #8eb6d9 0%, #24476d 60%, #0f1e33 100%);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 20px rgba(255,255,255,0.35),
+    0 10px 22px rgba(0,0,0,0.22);
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0px); }
+}
+
+.sub-text {
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+  font-size: clamp(20px, 2.5vw, 34px);
+  font-weight: 600;
+  background: linear-gradient(180deg, #b9cbdd 0%, #3a5570 70%, #1a2a3a 100%);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 12px rgba(255,255,255,0.3),
+    0 6px 14px rgba(0,0,0,0.25);
+}
+
+/* ================================
+   SECTION 共通
+================================ */
+section { padding: 80px 10%; }
+h2 {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 40px;
+  color: #0f1e33;
+}
+
+/* スクロール演出 */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.9s ease-out;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.motion-up { opacity:0; transform: translateY(40px); transition:1s; }
+.motion-up.visible { opacity:1; transform: translateY(0); }
+
+.motion-left { opacity:0; transform: translateX(-50px); transition:1s; }
+.motion-left.visible { opacity:1; transform: translateX(0); }
+
+.motion-right { opacity:0; transform: translateX(50px); transition:1s; }
+.motion-right.visible { opacity:1; transform: translateX(0); }
+
+/* ================================
+   ABOUT
+================================ */
+.about-box {
+  max-width: 900px;
+  margin: auto;
+  padding: 28px;
+  background: #ffffffcc;
+  border: 2px solid #e8d9b8;
+  border-radius: 12px;
+  text-align: center;
+  line-height: 1.9;
+  font-size: 18px;
+}
+
+/* ================================
+   BUSINESS
+================================ */
+.business-item {
+  margin-bottom: 40px;
+}
+
+/* ================================
+   ACHIEVEMENTS
+================================ */
+.achieve-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 30px;
+}
+
+.achieve-card {
+  background: #fff;
+  padding: 26px;
+  border-radius: 14px;
+  border: 2px solid #e8d9b8;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.achieve-card h4 {
+  margin-top: 0;
+  color: #24476d;
+}
+
+.achieve-card .bar {
+  height: 6px;
+  background: #d9c9ac;
+  border-radius: 3px;
+  margin-top: 14px;
+}
+
+/* ================================
+   VOICES
+================================ */
+.voice-card {
+  background: #fff;
+  border: 2px solid #e8d9b8;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  line-height: 1.8;
+}
+
+/* ================================
+   FOOTER
+================================ */
+footer {
+  text-align: center;
+  padding: 30px;
+  margin-top: 80px;
+  background: #f4f0e6;
+  font-size: 14px;
+  color: #555;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HAMBURGER BUTTON -->
+<div class="hamburger" onclick="toggleMenu()">
+  <span></span><span></span><span></span>
+</div>
+
+<!-- NAV PANEL（右側メニュー 初期は非表示） -->
+<nav class="nav-panel" id="nav-panel">
+  <a href="#about" onclick="toggleMenu()">About</a>
+  <a href="#business" onclick="toggleMenu()">Business</a>
+  <a href="#achievement" onclick="toggleMenu()">Achievements</a>
+  <a href="#voice" onclick="toggleMenu()">Voices</a>
+  <a href="mailto:virenty1105@gmail.com" onclick="toggleMenu()">Contact</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <canvas id="particle-canvas"></canvas>
+  <div>
+    <h1 class="logo-text">Virenty</h1>
+    <div class="sub-text">力強い存在を創る</div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about" class="fade-in motion-up">
+  <h2>About Virenty</h2>
+  <div class="about-box">
+    <p>
+      Virenty（ヴィレンティ）は、「力（Vir）」と「存在（Enty）」を語源とし、<br>
+      “挑戦する人に寄り添い、力強い存在へ導く” を理念に活動しています。<br><br>
+
+      誠実さ・行動力・仕組み化・継続・スピード。<br>
+      累計200店舗以上を支援し、成果にこだわり抜く会社です。<br><br>
+
+      代表：髙橋 由起
+    </p>
+  </div>
+</section>
+
+<!-- BUSINESS -->
+<section id="business" class="fade-in">
+  <h2 class="motion-up">Business</h2>
+
+  <!-- item 1 -->
+  <div class="business-item motion-left" style="
+    display:flex; gap:20px; padding:26px;
+    border:2px solid #e8d9b8; border-radius:14px; background:#fff;
+    box-shadow:0 6px 14px rgba(0,0,0,0.08);
+  ">
+    <div style="
+      width:60px;height:60px;
+      background:linear-gradient(145deg,#e7e7e7,#ffffff);
+      border-radius:12px;
+      box-shadow:4px 4px 10px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.8);
+      display:flex;justify-content:center;align-items:center;
+      font-size:26px;color:#24476d;font-weight:700;
+    ">📈</div>
+
+    <div>
+      <h3 style="margin-top:0;color:#24476d;">営業代行・セールスサポート</h3>
+      <p>接客・クロージング・リピート施策まで包括支援。</p>
+    </div>
+  </div>
+
+  <!-- item 2 -->
+  <div class="business-item motion-right" style="
+    display:flex; gap:20px; padding:26px;
+    border:2px solid #e8d9b8; border-radius:14px; background:#fff;
+    box-shadow:0 6px 14px rgba(0,0,0,0.08);
+  ">
+    <div style="
+      width:60px;height:60px;
+      background:linear-gradient(145deg,#e7e7e7,#ffffff);
+      border-radius:12px;
+      box-shadow:4px 4px 10px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.8);
+      display:flex;justify-content:center;align-items:center;
+      font-size:26px;color:#24476d;font-weight:700;
+    ">📣</div>
+
+    <div>
+      <h3 style="margin-top:0;color:#24476d;">集客改善コンサルティング</h3>
+      <p>SNS・Google・口コミ導線を最適化し成果へ導きます。</p>
+    </div>
+  </div>
+
+  <!-- item 3 -->
+  <div class="business-item motion-left" style="
+    display:flex; gap:20px; padding:26px;
+    border:2px solid #e8d9b8; border-radius:14px; background:#fff;
+    box-shadow:0 6px 14px rgba(0,0,0,0.08);
+  ">
+    <div style="
+      width:60px;height:60px;
+      background:linear-gradient(145deg,#e7e7e7,#ffffff);
+      border-radius:12px;
+      box-shadow:4px 4px 10px rgba(0,0,0,0.08), -4px -4px 10px rgba(255,255,255,0.8);
+      display:flex;justify-content:center;align-items:center;
+      font-size:26px;color:#24476d;font-weight:700;
+    ">🏢</div>
+
+    <div>
+      <h3 style="margin-top:0;color:#24476d;">スタートアップ支援</h3>
+      <p>開業準備・動線設計・メニュー構築を長期伴走で支援。</p>
+    </div>
+  </div>
+
+</section>
+
+<!-- ACHIEVEMENTS -->
+<section id="achievement" class="fade-in">
+  <h2 class="motion-up">Achievements</h2>
+
+  <div class="achieve-grid">
+
+    <div class="achieve-card motion-up">
+      <h4>累計支援店舗数</h4>
+      <div class="count" data-target="200">0</div>
+      <p>美容業界を中心に支援</p>
+      <div class="bar"></div>
+    </div>
+
+    <div class="achieve-card motion-up">
+      <h4>最大売上成長率</h4>
+      <div class="count" data-target="150">0</div>
+      <p>改善×仕組み化で成果最大化</p>
+      <div class="bar" style="width:85%;"></div>
+    </div>
+
+    <div class="achieve-card motion-up">
+      <h4>長期伴走支援率</h4>
+      <div class="count" data-target="90">0</div>
+      <p>半年〜1年以上の支援が多数</p>
+      <div class="bar" style="width:90%;"></div>
+    </div>
+
+    <div class="achieve-card motion-up">
+      <h4>美容領域専門性</h4>
+      <div class="count" data-target="70">0</div>
+      <p>サロン・エステに精通</p>
+      <div class="bar" style="width:70%;"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- VOICES -->
+<section id="voice" class="fade-in">
+  <h2 class="motion-up">Voices</h2>
+
+  <div style="
+    max-width:900px;
+    margin:auto;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  ">
+
+    <div class="voice-card motion-up">
+      <p style="font-size:18px;">
+        「売上が短期間で152%UP。スタッフ全体の意識も大きく変わりました。」
+      </p>
+      <p style="text-align:right;color:#24476d;font-weight:600;">— 美容サロン（大阪）</p>
+    </div>
+
+    <div class="voice-card motion-up">
+      <p style="font-size:18px;">
+        「導線改善で予約数が劇的に増加。実践的でとても分かりやすかったです。」
+      </p>
+      <p style="text-align:right;color:#24476d;font-weight:600;">— エステサロン（名古屋）</p>
+    </div>
+
+    <div class="voice-card motion-up">
+      <p style="font-size:18px;">
+        「開業準備〜構築まで全面支援、初月から安定しました。」
+      </p>
+      <p style="text-align:right;color:#24476d;font-weight:600;">— アイラッシュサロン（東京）</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  © 2025 Virenty. All Rights Reserved.
+</footer>
+
+<!-- ================================
+   JAVASCRIPT
+================================ -->
+<script>
+
+/* ハンバーガー切替 */
+function toggleMenu() {
+  document.querySelector(".hamburger").classList.toggle("active");
+  document.querySelector(".nav-panel").classList.toggle("open");
+}
+
+/* スクロールフェード */
+const fadeElems = document.querySelectorAll(".fade-in");
+const fadeObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
+});
+fadeElems.forEach(e => fadeObserver.observe(e));
+
+/* スクロールモーション */
+const motionElems = document.querySelectorAll(".motion-up,.motion-left,.motion-right");
+const motionObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
+},{threshold:0.2});
+motionElems.forEach(e => motionObserver.observe(e));
+
+/* 数字カウントアップ */
+const countElems = document.querySelectorAll(".count");
+const countObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target;
+      const target = Number(el.getAttribute("data-target"));
+      let num = 0;
+      const speed = target / 60;
+      const timer = setInterval(() => {
+        num += speed;
+        if (num >= target) {
+          num = target;
+          clearInterval(timer);
+        }
+        el.textContent = Math.floor(num);
+      }, 16);
+      countObserver.unobserve(el);
+    }
+  });
+},{threshold:0.6});
+countElems.forEach(el => countObserver.observe(el));
+
+/* パーティクル背景 */
+const canvas = document.getElementById("particle-canvas");
+const ctx = canvas.getContext("2d");
+
+let w, h;
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = document.querySelector(".hero").offsetHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+const particles = [];
+const particleCount = 80;
+
+for (let i = 0; i < particleCount; i++) {
+  particles.push({
+    angle: Math.random() * Math.PI * 2,
+    radius: Math.random() * 200 + 50,
+    size: Math.random() * 2 + 1,
+    speed: 0.4 + Math.random() * 0.6,
+    y: Math.random() * h
+  });
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, w, h);
+
+  particles.forEach(p => {
+    p.angle += p.speed * 0.01;
+    p.y -= p.speed * 0.4;
+    if (p.y < -50) p.y = h + 50;
+
+    const x = w / 2 + Math.cos(p.angle) * p.radius;
+    const y = p.y + Math.sin(p.angle) * (p.radius * 0.2);
+
+    ctx.beginPath();
+    ctx.arc(x, y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.8)";
+    ctx.fill();
+  });
+
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+</script>
+
+</body>
+</html>
